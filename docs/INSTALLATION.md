@@ -6,6 +6,8 @@ Extract the Windows ZIP outside your installed skin. Close PitoNote settings and
 
 The installer reads `SkinPath` from `%APPDATA%\Rainmeter\Rainmeter.ini`, backs up the configuration and validates a staging skin before replacing files. On upgrades it preserves notes/drafts and keeps the prior skin outside Skins. Unrelated skins, including original Notes++, remain in place.
 
+It also installs the bundled x64 `PitoNoteSnap.dll` into `%APPDATA%\Rainmeter\Plugins` while Rainmeter is closed. Any previous module is copied to the same install backup. No administrator access, third-party plugin download or compiler is required for the Windows ZIP.
+
 Backups default to `%LOCALAPPDATA%\PitoNote\InstallBackups`. Choose another directory outside the installed skin if needed:
 
 ```powershell
@@ -14,7 +16,7 @@ Backups default to `%LOCALAPPDATA%\PitoNote\InstallBackups`. Choose another dire
 
 ## Manual clean install
 
-Do not overwrite existing data with an empty release. For a clean install only, copy the release's `PitoNote` folder to Rainmeter's Skins directory, run `@Resources\PitoNote.exe --initialize` once, refresh Rainmeter and load `PitoNote\Control\Control.ini` in Manage. Use the script for upgrades. The source archive needs `Build.ps1` first.
+Do not overwrite existing data with an empty release. For a clean install only: exit Rainmeter, copy the release's `PitoNote` folder to Rainmeter's Skins directory, and run `@Resources\PitoNote.exe --initialize` once. Copy `@Resources\Plugins\x64\PitoNoteSnap.dll` to `%APPDATA%\Rainmeter\Plugins` (create the directory if necessary). Restart Rainmeter and load `PitoNote\Control\Control.ini` in Manage. Use the script for upgrades. The source archive needs `Build.ps1` first, including a supported C++ toolchain.
 
 ## Data
 
@@ -37,7 +39,8 @@ General settings → Data → Export data creates a JSON export. Import / restor
 3. Find the install backup printed by the installer. Keep both current and previous files.
 4. Move the current `Skins\PitoNote` aside, then copy `Before` to its original config folder name.
 5. Restore the backed-up `Rainmeter.ini` only to restore the old layout for **all** skins. Otherwise load the restored toolbar through Manage.
-6. Restart Rainmeter. An older store restores notes as they were at that time.
+6. If the backup contains `PitoNoteSnap-previous.dll`, restore it as `%APPDATA%\Rainmeter\Plugins\PitoNoteSnap.dll`. Otherwise a rollback to a pre-module version may leave the unused module in place; do not remove unrelated plugins.
+7. Restart Rainmeter. An older store restores notes as they were at that time.
 
 ## Limits
 

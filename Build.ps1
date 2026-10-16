@@ -1,5 +1,6 @@
 $ErrorActionPreference = 'Stop'
 $releaseRoot = $PSScriptRoot
+& (Join-Path $releaseRoot 'BuildNative.ps1')
 $framework = Join-Path $env:WINDIR 'Microsoft.NET\Framework64\v4.0.30319'
 $compiler = Join-Path $framework 'csc.exe'
 if(-not(Test-Path -LiteralPath $compiler)){throw 'Build requires Windows x64 with .NET Framework 4.x and WPF.'}
@@ -12,6 +13,7 @@ $argsList = @('/nologo','/target:winexe','/platform:anycpu','/optimize+','/debug
 $argsList += $references | ForEach-Object { '/reference:' + $_ }
 $argsList += ('/resource:'+(Join-Path $releaseRoot 'source\NativeCatalog.lua')+',PitoNote.NativeCatalog.lua')
 $argsList += ('/resource:'+(Join-Path $releaseRoot 'source\ControlList.lua')+',PitoNote.ControlList.lua')
+$argsList += ('/resource:'+(Join-Path $releaseRoot '@Resources\Plugins\x64\PitoNoteSnap.dll')+',PitoNote.PitoNoteSnap.dll')
 & $compiler @argsList @sourceFiles
 if ($LASTEXITCODE -ne 0) { throw 'Build failed.' }
 $brandDirectory=Join-Path $releaseRoot '@Resources\Brand'

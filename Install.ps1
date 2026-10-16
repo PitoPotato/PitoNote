@@ -7,6 +7,8 @@ if (-not (Test-Path -LiteralPath $rainmeter)) { throw 'Rainmeter is not installe
 if ([version](Get-Item -LiteralPath $rainmeter).VersionInfo.FileVersion -lt [version]'5.0.0.5293') { throw 'PitoNote requires Rainmeter 5.0.0.5293 or later.' }
 if (Get-Process -Name NotesStudio,PitoNote -ErrorAction SilentlyContinue) { throw 'Close PitoNote settings and let pending saves finish before installing.' }
 $configFile = Join-Path $env:APPDATA 'Rainmeter\Rainmeter.ini'
+$pluginDirectory=Join-Path (Split-Path $configFile -Parent) 'Plugins'
+$pluginFile=Join-Path $pluginDirectory 'PitoNoteSnap.dll'
 if(-not (Test-Path -LiteralPath $configFile)){throw 'Start Rainmeter once before installing PitoNote.'}
 $initialConfig = [IO.File]::ReadAllText($configFile)
 $skinPathValue=[regex]::Match($initialConfig,'(?im)^SkinPath=(.+)\r?$').Groups[1].Value.Trim()
@@ -25,14 +27,14 @@ if($sourceRoot.Equals($targetRoot,[StringComparison]::OrdinalIgnoreCase)-or$sour
 $helper = Join-Path $PSScriptRoot '@Resources\PitoNote.exe'
 if (-not (Test-Path -LiteralPath $helper)) { & (Join-Path $PSScriptRoot 'Build.ps1') }
 $backupBase = [IO.Path]::GetFullPath($BackupDirectory)
-$backup = [IO.Path]::GetFullPath((Join-Path $backupBase ('PitoNote-before-3.4.0-' + (Get-Date -Format 'yyyyMMdd-HHmmss'))))
+$backup = [IO.Path]::GetFullPath((Join-Path $backupBase ('PitoNote-before-3.5.0-' + (Get-Date -Format 'yyyyMMdd-HHmmss'))))
 if (-not $backup.StartsWith($backupBase.TrimEnd('\')+'\',[StringComparison]::OrdinalIgnoreCase) -or (Test-Path -LiteralPath $backup)) { throw 'Unsafe or existing backup target.' }
 foreach($path in @($oldRoot,$targetRoot)) { if ((Split-Path $path -Parent).TrimEnd('\') -ne $skinsRoot.TrimEnd('\')) { throw 'Skin target validation failed.' } }
 if($backupBase.Equals($targetRoot,[StringComparison]::OrdinalIgnoreCase)-or$backupBase.StartsWith($targetRoot+'\',[StringComparison]::OrdinalIgnoreCase)){throw 'The backup directory must be outside the installed skin.'}
 if($backupBase.Equals($sourceRoot,[StringComparison]::OrdinalIgnoreCase)-or$backupBase.StartsWith($sourceRoot+'\',[StringComparison]::OrdinalIgnoreCase)){throw 'The backup directory must be outside the extracted source/release folder.'}
 New-Item -ItemType Directory -Path $backup | Out-Null
 $wasRunning = @(Get-Process -Name Rainmeter -ErrorAction SilentlyContinue).Count -gt 0
-$oldMoved=$false; $newCreated=$false; $configBackedUp=$false
+$oldMoved=$false; $newCreated=$false; $configBackedUp=$false; $pluginChanged=$false; $hadPlugin=Test-Path -LiteralPath $pluginFile
 try {
     if ($wasRunning) {
         & $rainmeter '!Quit'
@@ -43,6 +45,7 @@ try {
     if (Get-Process -Name NotesStudio,PitoNote -ErrorAction SilentlyContinue) { throw 'A note is still saving; no skin files changed.' }
     Copy-Item -LiteralPath $configFile -Destination (Join-Path $backup 'Rainmeter.ini')
     $configBackedUp=$true
+    if($hadPlugin){Copy-Item -LiteralPath $pluginFile -Destination (Join-Path $backup 'PitoNoteSnap-previous.dll')}
     $config = [IO.File]::ReadAllText($configFile)
     if(-not $fresh){Copy-Item -LiteralPath $oldRoot -Destination (Join-Path $backup 'Before') -Recurse}
     $staging = Join-Path $backup 'Staging\PitoNote'
@@ -53,11 +56,14 @@ try {
         if ($item.Name -like 'PitoRich*') { throw 'Unexpected experimental rich-text module. No migration performed.' }
         Copy-Item -LiteralPath $item.FullName -Destination $stagingResources -Recurse
     }}
-    foreach($item in @('source','Build.ps1','README.md','Install.ps1','Migration.ps1','LICENSE','NOTICE.md','CHANGELOG.md','docs','assets')) { Copy-Item -LiteralPath (Join-Path $PSScriptRoot $item) -Destination $staging -Recurse }
+    foreach($item in @('source','native','Build.ps1','BuildNative.ps1','README.md','Install.ps1','Migration.ps1','LICENSE','NOTICE.md','CHANGELOG.md','docs','assets')) { Copy-Item -LiteralPath (Join-Path $PSScriptRoot $item) -Destination $staging -Recurse }
     Copy-Item -LiteralPath $helper -Destination $stagingResources
     Copy-Item -LiteralPath (Join-Path $PSScriptRoot '@Resources\Brand') -Destination $stagingResources -Recurse
     $init=Start-Process -FilePath (Join-Path $stagingResources 'PitoNote.exe') -ArgumentList '--initialize' -PassThru -Wait -WindowStyle Hidden
     if ($init.ExitCode -ne 0) { throw 'Staging validation failed. Existing skin is untouched.' }
+    New-Item -ItemType Directory -Path $pluginDirectory -Force|Out-Null
+    Copy-Item -LiteralPath (Join-Path $stagingResources 'Plugins\x64\PitoNoteSnap.dll') -Destination $pluginFile -Force
+    $pluginChanged=$true
     $converted = Convert-PitoNoteRainmeterConfig -Text $config
     if($fresh){$converted=Enable-PitoNoteToolbar -Text $converted}
     [IO.File]::WriteAllText((Join-Path $backup 'Rainmeter-after-migration.ini'),$converted,[Text.Encoding]::Unicode)
@@ -80,6 +86,10 @@ try {
     if($newCreated -and (Test-Path -LiteralPath $targetRoot)) { Move-Item -LiteralPath $targetRoot -Destination (Join-Path $backup 'Failed-new-install') }
     if($oldMoved) { Move-Item -LiteralPath $retiredOld -Destination $oldRoot }
     if($configBackedUp) { Copy-Item -LiteralPath (Join-Path $backup 'Rainmeter.ini') -Destination $configFile -Force }
+    if($pluginChanged){
+        if($hadPlugin){Copy-Item -LiteralPath (Join-Path $backup 'PitoNoteSnap-previous.dll') -Destination $pluginFile -Force}
+        else{Move-Item -LiteralPath $pluginFile -Destination (Join-Path $backup 'Failed-new-snap-plugin.dll')}
+    }
     if($wasRunning -and -not (Get-Process -Name Rainmeter -ErrorAction SilentlyContinue)) { Start-Process -FilePath $rainmeter -WindowStyle Hidden }
     throw $failure
 }

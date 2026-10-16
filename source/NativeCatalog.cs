@@ -26,7 +26,7 @@ namespace PitoNote {
         static string CatalogCall(string call){return "[!CommandMeasure CatalogScript \""+call+"\"]";}
         public static string BuildCatalog(){
             var b=new StringBuilder();Section(b,"Rainmeter","AppVersion=5.0.0.5293","SyntaxVersion=2","Update=1000 | Invisible 0","AccurateText=1","DynamicWindowSize=1","DefaultStartHidden=1","DefaultDraggable=0","DefaultAlwaysOnTop=2","DefaultKeepOnScreen=1","OnRefreshAction="+CatalogCall("InitializeView()"),"OnUnfocusAction="+CatalogCall("Unfocus()"),"MouseScrollUpAction="+CatalogCall("Scroll(-1)"),"MouseScrollDownAction="+CatalogCall("Scroll(1)"));
-            Section(b,"Metadata","Name=PitoNote native catalog","Version=3.4.0","License=CC BY-NC-SA 4.0");
+            Section(b,"Metadata","Name=PitoNote native catalog","Version=3.5.0","License=CC BY-NC-SA 4.0");
             var variables=new System.Collections.Generic.List<string>{"RootConfig="+Config,"PanelH=560"};for(int i=1;i<=8;i++)for(int a=1;a<=6;a++)variables.Add("Row"+i+"Ink"+a+"=48,45,38");Section(b,"Variables",variables.ToArray());
             Section(b,"CatalogScript","Measure=Script","ScriptFile=#@#NativeCatalog.lua");
             Section(b,"SearchTimer","Measure=ActionTimer","ActionList1=Repeat SubmitSearch,180,100000","SubmitSearch=[!TextEdit:Submit Search]","UpdateDivider=-1");

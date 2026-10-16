@@ -16,4 +16,4 @@ PitoNote substantially changes the implementation: C# data/settings helper, nati
 
 The logo is drawn from paths in `source/LogoAssets.cs`; PNG/ICO variants are generated during build. Interface icons use code-defined vector paths. No external icon pack or font is needed for the logo.
 
-Rainmeter and .NET Framework are dependencies, not redistributed here. PitoNote uses Rainmeter's command interface; it does not incorporate Rainmeter's source code. PitoNote is not an official release of Notes++, Rainmeter or Microsoft Sticky Notes.
+Rainmeter and .NET Framework are dependencies, not redistributed here. PitoNote uses Rainmeter's command interface and public plugin ABI. The native snapping module is original code with independently declared minimal ABI types; it does not incorporate Rainmeter's implementation or SDK header. Windows APIs are provided by the operating system. PitoNote is not an official release of Notes++, Rainmeter or Microsoft Sticky Notes.

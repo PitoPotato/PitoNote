@@ -100,6 +100,10 @@ namespace PitoNote {
             AddCheck(behavior,"Draggable","Allow dragging");AddCheck(behavior,"ReadOnly","Lock text editing");
             AddCheck(behavior,"HideDone","Hide note when marked complete");
             Hint(behavior,"Hiding icons does not lock editing. Right-click → Note settings to reopen this window.");
+            var snapping=Section(desktop,"Snap & align","Align visible paper edges, independent of shadows and note sizes.");
+            AddCheck(snapping,"SmartSnap","Smart snapping while dragging");
+            var snapOptions=Columns(snapping,2);AddNumber(snapOptions[0],"SnapDistance","Snap distance · px",2,30);AddNumber(snapOptions[1],"SnapGap","Note gap · px",0,80);
+            Hint(snapping,"Prefers left/top alignment and even gaps. Hold Ctrl or Shift to place freely. Resizing keeps the top-left corner fixed.");
 
             if(IsNote) {
                 var actionsPage=SettingsPage("Status");

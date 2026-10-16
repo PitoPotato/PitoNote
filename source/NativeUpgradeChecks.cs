@@ -19,6 +19,7 @@ namespace PitoNote {
                 var store=new Store();store.Settings.FontName=store.Settings.TitleFontName="Segoe UI";store.Settings.Position="Normal";
                 var note=Engine.NewNote(store.Settings);note.Title="PitoNote · kiểm tra riêng";note.Body="Tiếng Việt ă â ê ô ơ ư đ 😀\n#Width# [!Quit]";note.Height=note.Appearance.CardHeight=320;store.Notes.Add(note);Engine.Save(store,false);Engine.Render(store);
                 File.Copy(System.Reflection.Assembly.GetExecutingAssembly().Location,Path.Combine(Engine.Resources,"PitoNote.exe"));LogoAssets.Export(Path.Combine(Engine.Resources,"Brand"));
+                string pluginFolder=Path.Combine(Directory.GetParent(root).FullName,"Plugins");Directory.CreateDirectory(pluginFolder);File.Copy(Path.Combine(Engine.Resources,"Plugins","x64","PitoNoteSnap.dll"),Path.Combine(pluginFolder,"PitoNoteSnap.dll"));
                 string configPath=Path.Combine(Directory.GetParent(root).FullName,"Rainmeter.ini");if(File.Exists(configPath))throw new IOException("Private configuration already exists.");
                 string config="[Rainmeter]\r\nSkinPath="+Directory.GetParent(root).FullName+"\\\r\nDisableVersionCheck=1\r\nLogging=0\r\n["+Engine.Config+"\\Control]\r\nActive=1\r\nWindowX=80\r\nWindowY=80\r\nAlwaysOnTop=0\r\n["+Engine.Config+"\\Notes\\"+note.Id+"]\r\nActive=1\r\nWindowX=400\r\nWindowY=160\r\nAlwaysOnTop=0\r\n";
                 Engine.AtomicWrite(configPath,config);

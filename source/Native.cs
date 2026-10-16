@@ -12,6 +12,9 @@ namespace PitoNote {
         [StructLayout(LayoutKind.Sequential)] struct CopyData {public IntPtr Kind;public int Size;public IntPtr Data;}
         [StructLayout(LayoutKind.Sequential)] public struct Rect {public int Left,Top,Right,Bottom;public int Width{get{return Right-Left;}} public int Height{get{return Bottom-Top;}}}
         [StructLayout(LayoutKind.Sequential)] struct Point {public int X,Y;}
+        [StructLayout(LayoutKind.Sequential)] struct MonitorInfo {public int Size;public Rect Screen,Work;public uint Flags;}
+        [DllImport("user32.dll")] static extern IntPtr MonitorFromRect(ref Rect rect,uint flags);
+        [DllImport("user32.dll")] static extern bool GetMonitorInfo(IntPtr monitor,ref MonitorInfo info);
         [DllImport("user32.dll",CharSet=CharSet.Unicode)] static extern IntPtr FindWindow(string cls,string name);
         [DllImport("user32.dll",CharSet=CharSet.Unicode)] static extern IntPtr FindWindowEx(IntPtr parent,IntPtr after,string cls,string name);
         [DllImport("user32.dll")] static extern uint GetWindowThreadProcessId(IntPtr hwnd,out uint processId);
@@ -61,7 +64,9 @@ namespace PitoNote {
         }
         public static void CommitSize(string id,int w,int h) {
             WithDataLock(()=> {var latest=Engine.Load();var n=latest.Notes.FirstOrDefault(x=>x.Id==id);if(n==null)return;n.Width=w;n.Height=h;n.Appearance.Width=w;n.Appearance.CardHeight=h;Engine.Save(latest);Engine.Render(latest);});
-            Command("!Refresh \""+Engine.Config+"\\Notes\\"+id+"\"");
+            // The native meters already contain the new dimensions. Do not refresh the skin:
+            // refreshing can reapply an old anchor or interrupt the last mouse-up.
+            Engine.NotifyCatalog();
         }
         public static void Resize(string id,double offsetX,double offsetY) {
             var s=Engine.Load();var n=s.Notes.FirstOrDefault(x=>x.Id==id);if(n==null||!n.Pinned||n.Archived||n.Collapsed)return;var appearance=Engine.Effective(s.Settings,n);
@@ -72,18 +77,27 @@ namespace PitoNote {
             double anchorX=r.Left+(initialW-16+Math.Max(0,Math.Min(24,offsetX)))*sx;
             double anchorY=r.Top+(initialH-16+Math.Max(0,Math.Min(24,offsetY)))*sy;
             int width=initialW,height=initialH;bool changed=false;
+            var monitor=new MonitorInfo{Size=Marshal.SizeOf(typeof(MonitorInfo))};
+            int maxW=1600,maxH=1400;
+            if(GetMonitorInfo(MonitorFromRect(ref r,2),ref monitor)){
+                maxW=Math.Max(initialW,Math.Min(1600,(int)Math.Floor((monitor.Work.Right-r.Left)/sx)-16));
+                maxH=Math.Max(initialH,Math.Min(1400,(int)Math.Floor((monitor.Work.Bottom-r.Top)/sy)-16));
+            }
+            Command("!CommandMeasure SnapController BeginResize \""+config+"\"");
+            Command("!CommandMeasure NoteScript NormalizeAnchor() \""+config+"\"");
             Command("!Draggable 0 \""+config+"\"");
             try {
                 var end=DateTime.UtcNow.AddMinutes(2);
                 while((GetAsyncKeyState(1)&0x8000)!=0 && DateTime.UtcNow<end) {
                     Point cursor;if(!GetCursorPos(out cursor))break;
-                    int nextW=Math.Max(220,Math.Min(1600,initialW+(int)Math.Round((cursor.X-anchorX)/sx)));
-                    int nextH=Math.Max(Engine.MinNoteHeight(appearance),Math.Min(1400,initialH+(int)Math.Round((cursor.Y-anchorY)/sy)));
+                    int nextW=Math.Max(220,Math.Min(maxW,initialW+(int)Math.Round((cursor.X-anchorX)/sx)));
+                    int nextH=Math.Max(Engine.MinNoteHeight(appearance),Math.Min(maxH,initialH+(int)Math.Round((cursor.Y-anchorY)/sy)));
                     if(nextW!=width||nextH!=height){width=nextW;height=nextH;changed=true;Reflow(config,width,height);}
                     Thread.Sleep(16);
                 }
                 if(changed)CommitSize(id,width,height);
             } finally {
+                Command("!CommandMeasure SnapController EndResize \""+config+"\"");
                 Command("!Draggable "+(appearance.Draggable?1:0)+" \""+config+"\"");
                 if(oldDpi!=IntPtr.Zero)SetThreadDpiAwarenessContext(oldDpi);
             }

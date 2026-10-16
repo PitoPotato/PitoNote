@@ -7,6 +7,14 @@ namespace PitoNote {
         public static void WriteNativeAssets() {
             Directory.CreateDirectory(Path.Combine(Resources,"Drafts"));
             AtomicWrite(Path.Combine(Resources,"NativeEdit.lua"),NativeEditScript);
+            string path=Path.Combine(Resources,"Plugins","x64","PitoNoteSnap.dll");
+            using(var stream=System.Reflection.Assembly.GetExecutingAssembly().GetManifestResourceStream("PitoNote.PitoNoteSnap.dll"))
+            using(var memory=new MemoryStream()){
+                stream.CopyTo(memory);byte[] bytes=memory.ToArray();
+                if(!File.Exists(path)||!System.Linq.Enumerable.SequenceEqual(File.ReadAllBytes(path),bytes)){
+                    Directory.CreateDirectory(Path.GetDirectoryName(path));File.WriteAllBytes(path,bytes);
+                }
+            }
         }
         // User text is read as a value inside Lua, never interpolated into executable code,
         // a Rainmeter command or an external command line. Full-length Unicode lives in files.
@@ -20,6 +28,9 @@ function Initialize()
 end
 
 function InitializeContent()
+    -- Rainmeter's own four-edge magnet is replaced by the per-note native module.
+    SKIN:Bang('!SnapEdges',0)
+    NormalizeAnchor()
     for _, field in ipairs({'Title', 'Body'}) do
         local suffix = id .. '.' .. string.lower(field) .. '.txt'
         local value = SKIN:ReadTextFile(root .. 'Drafts\\' .. suffix)
@@ -32,6 +43,23 @@ function InitializeContent()
     SKIN:Bang('!UpdateMeter', 'Title')
     SKIN:Bang('!UpdateMeter', 'Body')
     SKIN:Bang('!Redraw')
+end
+
+function NormalizeAnchor()
+    local x,y=SKIN:GetX(),SKIN:GetY()
+    SKIN:Bang('!SetAnchor',0,0)
+    SKIN:Bang('!CommandMeasure','NoteScript','RestorePosition('..x..','..y..')')
+end
+function RestorePosition(x,y)
+    SKIN:MoveWindow(x,y)
+end
+function ProbeSnapState()
+    local measure=SKIN:GetMeasure('SnapController')
+    SKIN:WriteTextFile(root..id..'.snap-check.txt',tostring(measure and measure:GetValue() or 0),'UTF-8')
+end
+function ProbeSnapLayout()
+    local bounds=SKIN:GetMeter('WindowBounds')
+    SKIN:WriteTextFile(root..id..'.snap-layout.txt',SKIN:GetVariable('NoteW')..'|'..SKIN:GetVariable('NoteH')..'|'..bounds:GetW()..'|'..bounds:GetH()..'|'..SKIN:GetW()..'|'..SKIN:GetH(),'UTF-8')
 end
 
 function Focus(field)
@@ -111,12 +139,12 @@ end
             var settings=Effective(defaults,note);int width=NoteWidth(settings,note),height=NoteHeight(settings,note);
             string id=note==null?"":note.Id;int z=settings.Position=="Desktop"?-2:settings.Position=="Topmost"?1:0;
             var output=new StringBuilder();bool hidden=settings.ToolbarMode!="Always";
-            output.AppendLine("; PitoNote 3.4.0. Native Rainmeter TextEdit; no external input window.");
+            output.AppendLine("; PitoNote 3.5.0. Native Rainmeter TextEdit; no external input window.");
             string dismiss="[!TextEdit:Dismiss]";
             string stopTimers="[!CommandMeasure AutoSave \"Stop 1\"][!CommandMeasure AutoSave \"Stop 2\"]";
             dismiss+=stopTimers;
             Section(output,"Rainmeter","AppVersion=5.0.0.5293","SyntaxVersion=2","Update=-1","AccurateText=1","DynamicWindowSize=1",
-                "DefaultWindowX="+(189+cascade*28),"DefaultWindowY="+(152+cascade*28),"DefaultAlwaysOnTop="+z,"DefaultDraggable="+(settings.Draggable?1:0),"DefaultKeepOnScreen=1",
+                "DefaultWindowX="+(189+cascade*28),"DefaultWindowY="+(152+cascade*28),"DefaultAnchorX=0","DefaultAnchorY=0","DefaultSnapEdges=0","DefaultAlwaysOnTop="+z,"DefaultDraggable="+(settings.Draggable?1:0),"DefaultKeepOnScreen=1",
                 "OnRefreshAction=[!ZPos "+z+"][!Draggable "+(settings.Draggable?1:0)+"][!CommandMeasure NoteScript InitializeContent()][!CommandMeasure CatalogScript \"SetVisibility('"+id+"',1)\" \""+CatalogConfig+"\"]",
                 "OnUnfocusAction="+stopTimers,"OnCloseAction="+dismiss+"[!CommandMeasure CatalogScript \"SetVisibility('"+id+"',0)\" \""+CatalogConfig+"\"]",
                 "MouseOverAction="+(settings.ToolbarMode=="Hover"?"[!ShowMeterGroup NoteControls][!Redraw]":""),
@@ -128,9 +156,10 @@ end
                 "ContextTitle5=Delete note…","ContextAction5="+dismiss+Act("delete",id),
                 "ContextTitle6="+(note!=null&&note.Collapsed?"Expand note":"Collapse note"),"ContextAction6="+dismiss+Act("collapse",id),
                 "ContextTitle7=Duplicate note","ContextAction7="+dismiss+Act("duplicate",id));
-            Section(output,"Metadata","Name=PitoNote","Author=PitoNote; original Notes++ by raziEiL / Eclectic-Tech / killall-q","Version=3.4.0","License=CC BY-NC-SA 4.0");
+            Section(output,"Metadata","Name=PitoNote","Author=PitoNote; original Notes++ by raziEiL / Eclectic-Tech / killall-q","Version=3.5.0","License=CC BY-NC-SA 4.0");
             Section(output,"Variables","NoteId="+id,"NoteW="+width,"NoteH="+height,"Pad="+(note!=null&&note.Collapsed?Math.Min(16,settings.Padding):settings.Padding),"Radius="+(note!=null&&note.Collapsed?Math.Min(settings.Radius,height/2):settings.Radius),"BodyTop="+BodyTop(settings));
             Section(output,"NoteScript","Measure=Script","ScriptFile=#@#NativeEdit.lua","UpdateDivider=-1");
+            Section(output,"SnapController","Measure=Plugin","Plugin=PitoNoteSnap","Scope="+Config,"SnapEnabled="+(settings.SmartSnap?1:0),"SnapDistance="+settings.SnapDistance,"SnapGap="+settings.SnapGap,"UpdateDivider=-1");
             Section(output,"AutoSave","Measure=ActionTimer","ActionList1=Repeat SaveTitle,1000,100000","ActionList2=Repeat SaveBody,1000,100000",
                 "SaveTitle=[!TextEdit:Submit Title]","SaveBody=[!TextEdit:Submit Body]","UpdateDivider=-1");
             Section(output,"WindowBounds","Meter=Image","W=(#NoteW#+16)","H=(#NoteH#+16)","SolidColor=0,0,0,0","DynamicVariables=1");

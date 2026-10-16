@@ -1,5 +1,13 @@
 # Changelog
 
+## 3.5.0
+
+- Replaced four-edge Rainmeter snapping with visible-paper top/left alignment, dimension-aware adjacency and equal-gap placement between notes.
+- Added per-note smart snapping, capture distance and spacing options. Ctrl/Shift temporarily bypass snapping; hysteresis reduces jitter.
+- Kept the top-left fixed while resizing and limited growth to available monitor space instead of shifting the note.
+- Bundled a small native module running only in Rainmeter, without a resident helper, timers or global hooks. The installer backs up/deploys the module.
+- Added isolated C++ geometry and native window integration checks, preserving existing notes, settings and positions.
+
 ## 3.4.0
 
 - English UI throughout notes, menus, catalog, settings, accessibility labels, errors and confirmations.

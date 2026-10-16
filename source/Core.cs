@@ -63,9 +63,13 @@ namespace PitoNote {
         [DataMember] public int TitleGap = 6;
         [DataMember] public bool ShowTitle = true;
         [DataMember] public bool ReadOnly = false;
+        [DataMember] public bool SmartSnap = true;
+        [DataMember] public int SnapDistance = 10;
+        [DataMember] public int SnapGap = 12;
         [OnDeserializing] void NewOptionDefaults(StreamingContext context) {
             TitleFontName="Segoe UI";TitleStyle="Normal";TitleColor="302D26";BorderColor="66572E";BorderOpacity=32;
             FontWeight=400;TitleWeight=600;TextAlign="Left";TitleGap=6;ShowTitle=true;ToolbarMode="Hover";
+            SmartSnap=true;SnapDistance=10;SnapGap=12;
         }
     }
     [DataContract] public class Store {
@@ -305,7 +309,7 @@ namespace PitoNote {
         public static string BuildControl(Settings t) {
             var b=new StringBuilder();
             Section(b,"Rainmeter","Update=-1","AccurateText=1","DynamicWindowSize=1","DefaultWindowX=41","DefaultWindowY=39","DefaultAlwaysOnTop=-2","OnRefreshAction=[!ActivateConfig \""+CatalogConfig+"\" \"Catalog.ini\"]","ContextTitle=New note","ContextAction="+Act("new"),"ContextTitle2=General settings","ContextAction2="+Act("settings"),"ContextTitle3=Manage notes","ContextAction3="+Act("manage"));
-            Section(b,"Metadata","Name=PitoNote controls","Version=3.4.0");
+            Section(b,"Metadata","Name=PitoNote controls","Version=3.5.0");
             Section(b,"Variables","RootConfig="+Config);
             Section(b,"ControlScript","Measure=Script","ScriptFile=#@#ControlList.lua","UpdateDivider=-1");
             Rect(b,"Surface",4,4,238,44,13,"246,246,242,245","50,50,45,28",1);

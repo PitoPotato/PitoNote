@@ -24,7 +24,7 @@ namespace PitoNote {
    verify(Engine.Json(new Store{Settings=ReadSettings()})==Engine.Json(new Store{Settings=savedSettings}),"Controls preserve existing values");
    verify(settingsTabs.Items.Count==(IsNote?5:6),"Focused categories; manager belongs only to general settings");
    verify(IsNote?managementTab==null:managementList!=null&&!managementList.OffersContentEditing,"Manager has no note content editing controls");
-   verify(fields.Count==30&&!fields.ContainsKey("Title")&&!fields.ContainsKey("Body"),"30 appearance options, no popup content editor");
+   verify(fields.Count==33&&!fields.ContainsKey("Title")&&!fields.ContainsKey("Body"),"33 appearance options, no popup content editor");
    verify(Title.Contains("PitoNote")&&!Title.Contains("Notes++"),"Window uses the PitoNote brand");
    verify(IsNote?noteDelete!=null&&noteDelete.Content.ToString()=="Delete note…":noteDelete==null,"Delete is explicit and belongs only to an individual note");
    verify(!changedSettings&&!applySettings.IsEnabled&&!undoSettings.IsEnabled,"No pending edits at startup");

@@ -44,6 +44,7 @@ namespace PitoNote {
         }
         public static void ValidateOptions(Settings settings) {
             if(settings==null)throw new InvalidDataException("Note settings are missing.");
+            Check(settings.SnapDistance,2,30,"Snap distance");Check(settings.SnapGap,0,80,"Note gap");
             Check(settings.Width,220,1600,"Width");Check(settings.CardHeight,180,1400,"Height");
             Check(settings.Radius,0,64,"Corner radius");Check(settings.Padding,4,60,"Padding");Check(settings.TitleGap,0,40,"Title spacing");
             Check(settings.FontSize,8,48,"Font size");Check(settings.TitleSize,8,48,"Title size");

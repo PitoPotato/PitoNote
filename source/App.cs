@@ -27,6 +27,7 @@ namespace PitoNote {
                 if(args.Length>1&&args[0]=="--verify-upgrade")return UpgradeChecks.Run(args[1]);
                 if(args.Length>1&&args[0]=="--verify-native-upgrade")return NativeUpgradeChecks.Run(args[1]);
                 if(args.Length>1&&args[0]=="--verify-native-catalog")return NativeCatalogChecks.Run(args[1]);
+                if(args.Length>1&&args[0]=="--verify-native-snap")return NativeSnapChecks.Run(args[1]);
                 if(args.Length>1&&args[0]=="--export-brand"){LogoAssets.Export(args[1]);return 0;}
                 if(args.Length>1&&args[0]=="--stage-release"){
                     string clean=Path.GetFullPath(args[1]);

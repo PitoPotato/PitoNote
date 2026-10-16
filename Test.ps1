@@ -6,8 +6,10 @@ if(Test-Path -LiteralPath $testRoot){throw 'Tests require a new output directory
 $app=Join-Path $PSScriptRoot '@Resources\PitoNote.exe'
 if(-not(Test-Path -LiteralPath $app)){throw 'Run Build.ps1 first.'}
 New-Item -ItemType Directory -Path $testRoot | Out-Null
+& (Join-Path $PSScriptRoot '@Resources\tests\SnapGeometryChecks.exe')
+if($LASTEXITCODE-ne0){throw 'Snap geometry checks failed.'}
 $suites=@(@('--selftest','data','checks.txt'),@('--verify-settings','settings','popup-checks.txt'),@('--verify-delete','delete','delete-checks.txt'),@('--verify-management','management','management-checks.txt'),@('--verify-upgrade','upgrade','upgrade-checks.txt'))
-if($IncludeNative){$suites+=,@('--verify-native-catalog','native\Skins\PitoNoteProbe','native-catalog-checks.txt')}
+if($IncludeNative){$suites+=,@('--verify-native-catalog','native\Skins\PitoNoteProbe','native-catalog-checks.txt');$suites+=,@('--verify-native-snap','snap\Skins\PitoNoteProbe','native-snap-checks.txt')}
 foreach($suite in $suites){
     $path=Join-Path $testRoot $suite[1]
     $process=Start-Process -FilePath $app -ArgumentList ($suite[0]+' "'+$path+'"') -PassThru -WindowStyle Hidden
@@ -21,7 +23,8 @@ $process=Start-Process -FilePath $app -ArgumentList ('--stage-release "'+$stage+
 if($process.ExitCode-ne0){throw 'Clean staging failed.'}
 $empty=Get-Content -LiteralPath (Join-Path $stage '@Resources\data.json') -Raw | ConvertFrom-Json
 if(@($empty.Notes).Count-ne0-or$empty.Settings.FontName-ne'Segoe UI'){throw 'Fresh stage is not clean.'}
-foreach($relative in @('Control\Control.ini','Catalog\Catalog.ini','@Resources\NativeCatalog.lua','@Resources\NativeEdit.lua')){if(-not(Test-Path -LiteralPath (Join-Path $stage $relative))){throw ('Missing fresh-install asset: '+$relative)}}
+foreach($relative in @('Control\Control.ini','Catalog\Catalog.ini','@Resources\NativeCatalog.lua','@Resources\NativeEdit.lua','@Resources\Plugins\x64\PitoNoteSnap.dll')){if(-not(Test-Path -LiteralPath (Join-Path $stage $relative))){throw ('Missing fresh-install asset: '+$relative)}}
+if(-not$empty.Settings.SmartSnap-or$empty.Settings.SnapDistance-ne10-or$empty.Settings.SnapGap-ne12){throw 'Fresh snapping defaults are incorrect.'}
 . (Join-Path $PSScriptRoot 'Migration.ps1')
 $ini="[Rainmeter]`r`nSkinPath=C:\Example\Skins\`r`n[OtherSkin\Main]`r`nActive=1`r`nWindowX=99`r`n[Notes-pp\Notes-pp]`r`nActive=1`r`n"
 $fresh=Enable-PitoNoteToolbar -Text $ini

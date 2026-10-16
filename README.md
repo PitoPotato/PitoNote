@@ -4,12 +4,13 @@
 
 Native desktop sticky notes for Rainmeter, with direct editing, rounded cards and independent settings for every note.
 
-Version **3.4.0** · Windows x64 · English interface · Local storage
+Version **3.5.0** · Windows x64 · English interface · Local storage
 
 ## Features
 
 - Edit titles and plain text directly on the Rainmeter note. No floating editor overlay.
 - Resize each note by dragging its bottom-right corner; move it by dragging an empty area.
+- Smart snapping follows visible top/left edges, actual note sizes and even gaps. Resizing keeps the top-left fixed.
 - Choose any installed Windows font, including fonts installed for the current user.
 - Customize body/title fonts independently: size, weight, italic style and alignment.
 - Adjust colors, opacity, padding, corner radius, border and shadow. Seven built-in palettes.
@@ -21,6 +22,8 @@ Version **3.4.0** · Windows x64 · English interface · Local storage
 
 This is a Rainmeter skin with a small .NET Framework helper for settings, data operations and resizing, not a standalone notes app. Text is currently plain text: rich text and interactive checklists are not implemented.
 
+Smart snapping runs inside Rainmeter through the bundled `PitoNoteSnap.dll` module, without a separate resident process or global input hooks. The installer deploys this module automatically.
+
 ## Requirements
 
 - Windows 10/11, 64-bit, with .NET Framework 4.x and WPF.
@@ -31,7 +34,7 @@ The required Rainmeter build is a release candidate. See [Rainmeter 5.0 changes]
 ## Install
 
 1. Install the required Rainmeter version and start it once.
-2. Extract **PitoNote-3.4.0-windows.zip** from the repository's Releases page.
+2. Extract **PitoNote-3.5.0-windows.zip** from the repository's Releases page.
 3. Close PitoNote settings windows. Open PowerShell in the extracted `PitoNote` folder and run:
 
    ```powershell
@@ -55,6 +58,7 @@ If the toolbar is hidden, open **Rainmeter → Manage → PitoNote → Control �
 | Toolbar gear | New-note defaults, management and backup |
 | Note title or body | Click to edit directly |
 | Note bottom-right corner | Drag to resize |
+| Hold Ctrl or Shift while dragging | Temporarily bypass smart snapping |
 | Note gear / right-click → Note settings | Customize this note only |
 | Note **×** | Hide without deleting |
 | Right-click → Delete note… | Confirm deletion; keep a recovery backup |
@@ -64,9 +68,11 @@ Titles support 160 characters; bodies 100,000. Native TextEdit handles selection
 
 General appearance settings apply only to notes created afterward. To change an existing note, open that note's settings.
 
+Under **Desktop → Snap & align**, enable/disable smart snapping, set the capture distance (2–30 px), and adjust the gap (0–80 px) for each note. Distances follow Rainmeter's display scaling. Transparent shadow margins are excluded; hidden notes are not snap targets. Top/left alignment takes priority on near ties, and a slightly wider release distance prevents jitter. Notes do not rearrange automatically when you install or change settings.
+
 ## Build and test
 
-Build on Windows x64 with the .NET Framework C# compiler and WPF assemblies. No Node.js, NuGet restore, Visual Studio or external Rainmeter plugin is required.
+Build on Windows x64 with the .NET Framework C# compiler/WPF assemblies and either **Visual Studio C++ Build Tools with a Windows SDK** or **MinGW-w64 g++**. `BuildNative.ps1` detects the installed compiler. No Node.js, NuGet restore or third-party Rainmeter plugin is required. End users of the Windows ZIP do not need a compiler.
 
 ```powershell
 .\Build.ps1
@@ -77,7 +83,7 @@ Build on Windows x64 with the .NET Framework C# compiler and WPF assemblies. No 
 .\Release.ps1
 ```
 
-The helper is generated at `@Resources\PitoNote.exe`. Tests use new private directories, not installed notes. Standard tests do not need Rainmeter installed; native tests require the version above. Non-English fixtures intentionally verify Unicode support.
+The helper is generated at `@Resources\PitoNote.exe`, with the native module at `@Resources\Plugins\x64\PitoNoteSnap.dll`. Tests use new private directories, not installed notes. Standard tests include C++ geometry checks and do not need Rainmeter installed; native tests require the version above. Non-English fixtures intentionally verify Unicode support.
 
 GitHub Actions builds, tests and packages on Windows without automatically publishing a release. See [architecture](docs/ARCHITECTURE.md), [contributing](CONTRIBUTING.md) and [publishing](docs/PUBLISHING.md).
 
