@@ -1,0 +1,25 @@
+name: Bug report
+description: Report a reproducible PitoNote issue without private note data.
+body:
+  - type: markdown
+    attributes:
+      value: Never attach real notes, exports, drafts, backups or screenshots containing personal information.
+  - type: input
+    id: versions
+    attributes:
+      label: Versions
+      description: PitoNote, Rainmeter, Windows, display scaling and monitor count.
+    validations:
+      required: true
+  - type: textarea
+    id: reproduce
+    attributes:
+      label: Steps to reproduce
+      description: Use an invented sample note. Include expected and actual behavior.
+    validations:
+      required: true
+  - type: textarea
+    id: details
+    attributes:
+      label: Additional details
+      description: Redacted error text or a screenshot using fake content only.

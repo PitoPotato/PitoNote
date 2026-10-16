@@ -1,0 +1,15 @@
+name: Feature request
+description: Suggest an improvement to the Rainmeter skin.
+body:
+  - type: textarea
+    id: need
+    attributes:
+      label: What would this help you do?
+      description: Describe the problem or workflow without personal note content.
+    validations:
+      required: true
+  - type: textarea
+    id: proposal
+    attributes:
+      label: Suggested behavior
+      description: Describe the interaction and any alternatives you considered.
